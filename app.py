@@ -798,7 +798,6 @@ _PARAM_WIDGET_MAP = {
     "f0": ("f0_slider", "f0_num"),
     "fs": ("fs_slider", "fs_num"),
     "amplitude": ("amp_slider", "amp_num"),
-    "phase_deg": ("phase_slider", "phase_num"),
     "duration": ("dur_slider", "dur_num"),
 }
 
@@ -811,7 +810,6 @@ def apply_preset(preset_id: str) -> None:
     st.session_state["f0"] = float(cfg["f0"])
     st.session_state["fs"] = float(cfg["fs"])
     st.session_state["amplitude"] = float(cfg["amplitude"])
-    st.session_state["phase_deg"] = float(cfg["phase_deg"])
     st.session_state["duration"] = float(cfg["duration"])
     st.session_state["audible_scaling"] = bool(cfg["audible_scaling"])
     st.session_state["scale_factor"] = (
@@ -989,16 +987,6 @@ def render_sidebar() -> None:
             fmt="%.1f",
         )
         _render_synced_param(
-            label="Phase φ (°)",
-            canonical="phase_deg",
-            slider_min=0.0,
-            slider_max=360.0,
-            num_min=0.0,
-            num_max=360.0,
-            step=1.0,
-            fmt="%.0f",
-        )
-        _render_synced_param(
             label="Time window T (s)",
             canonical="duration",
             slider_min=dur_min,
@@ -1034,7 +1022,7 @@ def main() -> None:
     f0 = float(st.session_state["f0"])
     fs = float(st.session_state["fs"])
     amplitude = float(st.session_state["amplitude"])
-    phase_deg = float(st.session_state["phase_deg"])
+    phase_deg = 0.0
     duration = float(st.session_state["duration"])
 
     sim, analysis = _cached_simulate_and_analyze(

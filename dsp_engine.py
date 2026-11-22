@@ -442,8 +442,8 @@ def _build_interpretation_steps(
         )
     elif regime_code == "critical_nyquist":
         step3 = (
-            "Sampling at 2 samples/cycle means amplitude depends on sin(φ): "
-            "φ = 0° hits zero crossings, whereas φ = 90° captures peaks."
+            "At 2 samples/cycle (fs = 2f₀), every uniform sample of the sine wave "
+            "lands directly on a zero crossing (t = n / 2f₀)."
         )
     else:
         r_mod_s = _format_num(alias.r_mod)
@@ -471,8 +471,8 @@ def _build_interpretation_steps(
             )
     elif regime_code == "critical_nyquist":
         step4 = (
-            f"Right at fs = 2f₀, any phase offset φ = 0° causes complete signal loss in "
-            f"uniform samples; strict oversampling (fs > 2f₀) is required in practice."
+            f"Because samples fall on the zero crossings at fs = 2f₀, the sampled "
+            f"signal collapses to zero; strict oversampling (fs > 2f₀) is required in practice."
         )
     elif regime_code == "harmonic_aliasing":
         step4 = (
