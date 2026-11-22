@@ -860,12 +860,11 @@ def _set_waveform(wf: str) -> None:
 
 
 def _is_high_freq_range() -> bool:
-    """Expand slider bounds dynamically when high-frequency presets or values are active."""
+    """Expand slider bounds dynamically when high-frequency values are active."""
     return (
         st.session_state["f0"] > 100.0
         or st.session_state["fs"] > 200.0
         or st.session_state["duration"] < 0.05
-        or st.session_state.get("active_preset") == "audible_pitch_folding"
     )
 
 

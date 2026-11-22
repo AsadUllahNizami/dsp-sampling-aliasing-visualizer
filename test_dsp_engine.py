@@ -23,14 +23,12 @@ from dsp_engine import (
 
 
 def test_presets_execute_cleanly() -> None:
-    """All 6 educational presets execute simulation, analysis, and audio synthesis."""
-    assert len(PRESETS) == 6
+    """All 4 educational presets execute simulation, analysis, and audio synthesis."""
+    assert len(PRESETS) == 4
     expected_ids = {
         "oversampled",
         "nyquist_limit",
         "classic_undersampling",
-        "stroboscopic_freeze",
-        "audible_pitch_folding",
         "square_wave_harmonics",
     }
     assert set(PRESETS.keys()) == expected_ids
@@ -115,16 +113,15 @@ def test_oversampled_preset_accurate_reconstruction() -> None:
     assert analysis["snr_db"] > 30.0
 
 
-def test_stroboscopic_freeze_preset() -> None:
-    """Sampling at f0=fs=10 Hz produces 0 Hz DC freeze with zero samples at phi=0."""
-    cfg = PRESETS["stroboscopic_freeze"]
+def test_dc_alias_when_fs_equals_f0() -> None:
+    """Sampling at f0=fs=10 Hz produces 0 Hz DC alias with zero samples at phi=0."""
     sim = simulate_sampling(
-        waveform=cfg["waveform"],
-        f0=cfg["f0"],
-        fs=cfg["fs"],
-        amplitude=cfg["amplitude"],
-        phase_deg=cfg["phase_deg"],
-        duration=cfg["duration"],
+        waveform="Sine",
+        f0=10.0,
+        fs=10.0,
+        amplitude=1.0,
+        phase_deg=0.0,
+        duration=0.5,
     )
     analysis = analyze_sampling(sim)
     alias = sim["alias"]
@@ -231,14 +228,13 @@ def test_audio_synthesis_wav_format_and_labels() -> None:
             pcm = np.frombuffer(wf.readframes(wf.getnframes()), dtype="<i2")
             assert np.max(np.abs(pcm)) > 1000
 
-    # Unscaled audible pitch folding preset
-    cfg = PRESETS["audible_pitch_folding"]
+    # Unscaled direct Hz audio synthesis
     direct_audio = synthesize_audio_pair(
-        waveform=cfg["waveform"],
-        f0=cfg["f0"],
-        fs=cfg["fs"],
-        audible_scaling=cfg["audible_scaling"],
-        scale_factor=cfg["scale_factor"],
+        waveform="Sine",
+        f0=880.0,
+        fs=1000.0,
+        audible_scaling=False,
+        scale_factor=1.0,
         audio_duration=0.25,
     )
     assert direct_audio["original_label"] == "880 Hz tone"
@@ -355,34 +351,21 @@ def test_signals_and_audio_before_and_after_across_all_presets() -> None:
     assert ov_audio["original_peak_hz"] == pytest.approx(250.0, abs=1.0)
     assert ov_audio["aliased_peak_hz"] == pytest.approx(250.0, abs=1.0)
 
-    # 4. Audible pitch folding (880 Hz -> 120 Hz)
-    ap = PRESETS["audible_pitch_folding"]
-    ap_audio = synthesize_audio_pair(
-        waveform=ap["waveform"],
-        f0=ap["f0"],
-        fs=ap["fs"],
-        audible_scaling=ap["audible_scaling"],
-        scale_factor=ap["scale_factor"],
+    # 4. Critical Nyquist (phi=0): Original 500 Hz -> Aliased silent
+    sc = PRESETS["nyquist_limit"]
+    s_audio = synthesize_audio_pair(
+        waveform=sc["waveform"],
+        f0=sc["f0"],
+        fs=sc["fs"],
+        phase_deg=sc["phase_deg"],
+        audible_scaling=sc["audible_scaling"],
+        scale_factor=sc["scale_factor"],
     )
-    assert ap_audio["original_peak_hz"] == pytest.approx(880.0, abs=1.0)
-    assert ap_audio["aliased_peak_hz"] == pytest.approx(120.0, abs=1.0)
+    assert s_audio["original_peak_hz"] == pytest.approx(500.0, abs=1.0)
+    assert s_audio["aliased_rms"] == pytest.approx(0.0, abs=1e-9)
+    assert s_audio["aliased_peak_hz"] == pytest.approx(0.0, abs=1e-9)
 
-    # 5. Stroboscopic freeze & Critical Nyquist (phi=0): Original 500 Hz -> Aliased silent
-    for silent_id in ("stroboscopic_freeze", "nyquist_limit"):
-        sc = PRESETS[silent_id]
-        s_audio = synthesize_audio_pair(
-            waveform=sc["waveform"],
-            f0=sc["f0"],
-            fs=sc["fs"],
-            phase_deg=sc["phase_deg"],
-            audible_scaling=sc["audible_scaling"],
-            scale_factor=sc["scale_factor"],
-        )
-        assert s_audio["original_peak_hz"] == pytest.approx(500.0, abs=1.0)
-        assert s_audio["aliased_rms"] == pytest.approx(0.0, abs=1e-9)
-        assert s_audio["aliased_peak_hz"] == pytest.approx(0.0, abs=1e-9)
-
-    # 6. Square-wave harmonics: verify odd harmonics before and folded harmonics after
+    # 5. Square-wave harmonics: verify odd harmonics before and folded harmonics after
     sq = PRESETS["square_wave_harmonics"]
     sq_audio = synthesize_audio_pair(
         waveform=sq["waveform"],

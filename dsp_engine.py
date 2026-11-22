@@ -93,32 +93,6 @@ PRESETS: dict[str, dict[str, Any]] = {
         "audible_scaling": True,
         "scale_factor": 50.0,
     },
-    "stroboscopic_freeze": {
-        "id": "stroboscopic_freeze",
-        "title": "Stroboscopic freeze",
-        "subtitle": "f₀ 10 Hz · fs 10 Hz → DC",
-        "waveform": "Sine",
-        "f0": 10.0,
-        "fs": 10.0,
-        "amplitude": 1.0,
-        "phase_deg": 0.0,
-        "duration": 0.5,
-        "audible_scaling": True,
-        "scale_factor": 50.0,
-    },
-    "audible_pitch_folding": {
-        "id": "audible_pitch_folding",
-        "title": "Audible pitch folding",
-        "subtitle": "f₀ 880 Hz · fs 1000 Hz → 120 Hz",
-        "waveform": "Sine",
-        "f0": 880.0,
-        "fs": 1000.0,
-        "amplitude": 1.0,
-        "phase_deg": 0.0,
-        "duration": 0.02,
-        "audible_scaling": False,
-        "scale_factor": 1.0,
-    },
     "square_wave_harmonics": {
         "id": "square_wave_harmonics",
         "title": "Square-wave harmonics",
@@ -458,7 +432,7 @@ def _build_interpretation_steps(
     if alias.is_dc_freeze:
         step3 = (
             f"{f0_s} mod {fs_s} = 0: every sample lands at the exact same phase of the cycle "
-            f"(stroboscopic DC freeze)."
+            f"(0 Hz DC alias)."
         )
     elif alias.phase_inverted:
         r_mod_s = _format_num(alias.r_mod)
@@ -558,7 +532,7 @@ def analyze_sampling(sim: dict[str, Any]) -> dict[str, Any]:
         banner_level = "danger"
         if alias.is_dc_freeze:
             banner_message = (
-                f"fs < 2f₀: stroboscopic freeze — the {f0_s} Hz {wf_lower} aliases to 0 Hz (DC)."
+                f"fs < 2f₀: the {f0_s} Hz {wf_lower} aliases to 0 Hz (DC)."
             )
         elif alias.phase_inverted:
             banner_message = (
@@ -618,7 +592,7 @@ def analyze_sampling(sim: dict[str, Any]) -> dict[str, Any]:
     # Alias card subtitle matching HTML style ("k = 1, inverted" / "k = 0, exact")
     if alias.is_dc_freeze:
         alias_value_display = "0 Hz (DC)"
-        alias_subtitle = f"k = {alias.k}, stroboscopic"
+        alias_subtitle = f"k = {alias.k}, DC alias"
     elif alias.is_critical_nyquist:
         alias_value_display = f"{alias_s} Hz"
         alias_subtitle = "fs = 2f₀ boundary"
